@@ -1,0 +1,5 @@
+AuthType Basic
+AuthName "Ludo Amore Restricted Area"
+AuthUserFile "/home/u471204330/domains/n4tural.id/public_html/ludo/.htpasswd"
+Require valid-user
+    

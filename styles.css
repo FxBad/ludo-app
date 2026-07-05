@@ -1,0 +1,831 @@
+/* ==========================================================================
+   DESIGN TOKENS & SYSTEM VARIABLES
+   ========================================================================== */
+:root {
+    /* Color Palette (Theme: Romantic Velvet & Pastel Peach) */
+    --color-bg-start: #FFF6F3;
+    --color-bg-end: #FBE0D7;
+    --color-bg-accent: rgba(248, 193, 186, 0.3);
+    
+    --color-primary: #D15B6D;       /* Velvet Rose (Buttons, Focus) */
+    --color-primary-hover: #BD4E5F;
+    --color-primary-light: #FCEAE6; /* Creamy rose */
+    
+    --color-pink: #FF9B9B;          /* Player 1 Color */
+    --color-pink-dark: #E17777;
+    --color-pink-glow: rgba(255, 155, 155, 0.4);
+    
+    --color-blue: #4D8BE8;          /* Player 2 Color */
+    --color-blue-dark: #326EC7;
+    --color-blue-glow: rgba(77, 139, 232, 0.4);
+    
+    --color-text-dark: #4A1D24;     /* Deep Crimson for readability */
+    --color-text-muted: #8E6C71;
+    --color-surface: rgba(255, 255, 255, 0.75);
+    --color-glass-border: rgba(255, 255, 255, 0.45);
+    
+    /* Layout & Spacing */
+    --border-radius-sm: 8px;
+    --border-radius-md: 16px;
+    --border-radius-lg: 24px;
+    
+    --shadow-premium: 0 15px 35px rgba(74, 29, 36, 0.08), 
+                      0 5px 15px rgba(74, 29, 36, 0.04);
+    --shadow-glow-pink: 0 10px 25px rgba(255, 155, 155, 0.35);
+    --shadow-glow-blue: 0 10px 25px rgba(77, 139, 232, 0.35);
+    
+    /* Typography */
+    --font-heading: 'Playfair Display', Georgia, serif;
+    --font-body: 'Quicksand', sans-serif;
+
+    /* Fluid Typography (clamp-based) */
+    --text-xs: clamp(0.7rem, 0.65rem + 0.25vw, 0.75rem);
+    --text-sm: clamp(0.8rem, 0.75rem + 0.3vw, 0.9rem);
+    --text-base: clamp(0.95rem, 0.9rem + 0.4vw, 1.05rem);
+    --text-md: clamp(1.1rem, 1.05rem + 0.5vw, 1.25rem);
+    --text-lg: clamp(1.25rem, 1.2rem + 0.6vw, 1.45rem);
+    --text-xl: clamp(1.5rem, 1.4rem + 0.8vw, 1.85rem);
+    --text-2xl: clamp(1.85rem, 1.75rem + 1.2vw, 2.3rem);
+    
+    /* Fluid Spacing & Padding */
+    --spacing-xs: clamp(6px, 1.5vw, 10px);
+    --spacing-sm: clamp(10px, 2.5vw, 15px);
+    --spacing-md: clamp(15px, 3.5vw, 25px);
+    --spacing-lg: clamp(20px, 4.5vw, 30px);
+}
+
+/* ==========================================================================
+   RESET & BASE STYLES
+   ========================================================================== */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background: radial-gradient(circle at center, var(--color-bg-start) 0%, var(--color-bg-end) 100%);
+    font-family: var(--font-body);
+    color: var(--color-text-dark);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    padding: clamp(12px, 3.5dvw, 40px);
+}
+
+/* Decorative background elements */
+body::before, body::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    z-index: -1;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+body::before {
+    width: 300px;
+    height: 300px;
+    background: var(--color-pink-glow);
+    top: 10%;
+    left: 10%;
+}
+
+body::after {
+    width: 350px;
+    height: 350px;
+    background: var(--color-blue-glow);
+    bottom: 10%;
+    right: 10%;
+}
+
+/* ==========================================================================
+   LAYOUT STRUCTURE
+   ========================================================================== */
+#app-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(15px, 3vh, 30px);
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+#board-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: min(92dvw, 450px, 45dvh);
+}
+
+/* Papan Ludo */
+#game-board {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background-image: url('/assets/ludo-board.png');
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-premium), 0 2px 4px rgba(0, 0, 0, 0.05);
+    border: clamp(4px, 1.2vw, 6px) solid var(--color-surface);
+}
+
+/* ==========================================================================
+   PION & PAWN ANIMATIONS
+   ========================================================================== */
+.pion {
+    width: 4.8%; /* Slightly increased for touchability */
+    height: auto;
+    position: absolute;
+    /* Custom transform transition for hover effects; GSAP handles left/top positioning */
+    transition: transform 0.25s ease;
+    filter: drop-shadow(0px 6px 6px rgba(74, 29, 36, 0.25));
+    z-index: 10;
+    --offset-x: -50%;
+    --offset-y: -100%;
+    transform: translate(var(--offset-x), var(--offset-y));
+    cursor: pointer;
+}
+
+/* Hover effect on pawns */
+.pion:hover {
+    transform: translate(var(--offset-x), calc(var(--offset-y) - 8%)) scale(1.15);
+    filter: drop-shadow(0px 10px 10px rgba(74, 29, 36, 0.35));
+}
+
+/* Offsets so the 4 pawns do not overlap completely when stacked */
+#pion-p1-a {
+    --offset-x: -65%;
+    --offset-y: -115%;
+}
+
+#pion-p1-b {
+    --offset-x: -35%;
+    --offset-y: -85%;
+}
+
+#pion-p2-a {
+    --offset-x: -35%;
+    --offset-y: -85%;
+}
+
+#pion-p2-b {
+    --offset-x: -15%;
+    --offset-y: -55%;
+}
+
+/* Active Pawn pulse bounce animation */
+.pion.active-pawn {
+    animation: pawn-bounce 1.6s infinite ease-in-out;
+    z-index: 12;
+}
+
+@keyframes pawn-bounce {
+    0%, 100% {
+        transform: translate(var(--offset-x), var(--offset-y)) scale(1);
+        filter: drop-shadow(0px 6px 6px rgba(74, 29, 36, 0.25));
+    }
+    50% {
+        transform: translate(var(--offset-x), calc(var(--offset-y) - 15%)) scale(1.12);
+        filter: drop-shadow(0px 14px 14px rgba(74, 29, 36, 0.18));
+    }
+}
+
+/* ==========================================================================
+   PATH DEBUG OVERLAY
+   ========================================================================== */
+#debug-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 20;
+    display: none;
+}
+
+#debug-overlay.visible {
+    display: block;
+}
+
+.debug-dot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.debug-dot.debug-p1 {
+    background: rgba(255, 0, 90, 0.85);
+}
+
+.debug-dot.debug-p2 {
+    background: rgba(0, 90, 255, 0.85);
+}
+
+.debug-dot {
+    cursor: grab;
+    pointer-events: auto;
+}
+
+.debug-dot.debug-selected {
+    outline: 2px solid #FFD700;
+    outline-offset: 1px;
+}
+
+.debug-dot.debug-path-hidden {
+    display: none;
+}
+
+.debug-panel-checkbox {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+}
+
+/* ==========================================================================
+   PATH DEBUG PANEL
+   ========================================================================== */
+#debug-panel {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 200;
+    background: #FFFDFC;
+    border: 1px solid rgba(74, 29, 36, 0.15);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-premium);
+    padding: 14px;
+    width: 220px;
+    font-size: var(--text-xs);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#debug-panel.visible {
+    display: flex;
+}
+
+#debug-panel h4 {
+    font-family: var(--font-heading);
+    font-size: var(--text-sm);
+    color: var(--color-text-dark);
+}
+
+.debug-panel-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.debug-panel-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.debug-panel-row input[type="number"] {
+    width: 100%;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(74, 29, 36, 0.2);
+    font-family: var(--font-body);
+}
+
+.debug-panel-row button {
+    flex: 1;
+    padding: 6px;
+    border-radius: 6px;
+    border: none;
+    background: var(--color-primary);
+    color: white;
+    cursor: pointer;
+    font-size: var(--text-xs);
+}
+
+#debug-export {
+    width: 100%;
+    height: 90px;
+    font-family: monospace;
+    font-size: 10px;
+    resize: vertical;
+    border-radius: 6px;
+    border: 1px solid rgba(74, 29, 36, 0.2);
+    padding: 6px;
+}
+
+.debug-panel-hint {
+    color: var(--color-text-muted);
+    font-size: 10px;
+}
+
+/* ==========================================================================
+   DASHBOARD PANEL (CONTROLS & INFO)
+   ========================================================================== */
+#dashboard-panel {
+    background: var(--color-surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--color-glass-border);
+    border-radius: var(--border-radius-lg);
+    padding: clamp(16px, 4vw, 30px);
+    width: 100%;
+    max-width: min(92dvw, 450px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(15px, 3vh, 25px);
+    box-shadow: var(--shadow-premium);
+}
+
+/* Header */
+.app-header {
+    text-align: center;
+}
+
+.app-header h1 {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--color-text-dark);
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+}
+
+.app-header .subtitle {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    font-weight: 500;
+}
+
+/* Player Cards Container */
+.player-cards {
+    display: flex;
+    gap: clamp(10px, 2.5vw, 15px);
+    width: 100%;
+}
+
+.player-card {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 2vw, 12px);
+    padding: clamp(8px, 2vw, 12px) clamp(10px, 3vw, 16px);
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--border-radius-md);
+    transition: all 0.3s ease;
+}
+
+.player-avatar {
+    width: clamp(28px, 8vw, 36px);
+    height: clamp(28px, 8vw, 36px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-sm);
+    color: white;
+}
+
+.player-avatar svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2.5px;
+    display: block;
+}
+
+.avatar-pink {
+    background: var(--color-pink);
+    box-shadow: 0 4px 10px var(--color-pink-glow);
+}
+
+.avatar-blue {
+    background: var(--color-blue);
+    box-shadow: 0 4px 10px var(--color-blue-glow);
+}
+
+.player-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-name {
+    font-weight: 700;
+    font-size: var(--text-sm);
+    color: var(--color-text-dark);
+}
+
+.player-status {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+}
+
+.player-score {
+    margin-left: auto;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--text-md);
+    color: var(--color-primary);
+    background: var(--color-primary-light);
+    border-radius: 50%;
+    min-width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Active Player Card Indicator States */
+.player-card.active {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-premium);
+}
+
+.player-card.active#card-p1 {
+    border-color: var(--color-pink);
+    outline: 2px solid rgba(255, 155, 155, 0.2);
+}
+
+.player-card.active#card-p2 {
+    border-color: var(--color-blue);
+    outline: 2px solid rgba(77, 139, 232, 0.2);
+}
+
+/* Game Control & Turn Area */
+#control-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: clamp(12px, 2.5vw, 18px);
+    padding-top: 10px;
+    border-top: 1px dashed rgba(74, 29, 36, 0.1);
+}
+
+#turn-indicator {
+    font-family: var(--font-heading);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    transition: color 0.3s ease;
+}
+
+#round-target-label {
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    font-weight: 600;
+}
+
+/* Color classes dynamic in JS */
+.turn-p1 {
+    color: var(--color-pink-dark);
+}
+.turn-p2 {
+    color: var(--color-blue-dark);
+}
+
+/* Dice container */
+.dice-wrapper {
+    width: clamp(80px, 20vw, 100px);
+    height: clamp(80px, 20vw, 100px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--color-glass-border);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+}
+
+#dice-image {
+    width: clamp(60px, 15vw, 76px);
+    height: clamp(60px, 15vw, 76px);
+    filter: drop-shadow(0px 6px 12px rgba(74, 29, 36, 0.12));
+    transition: transform 0.15s ease-out;
+}
+
+/* Button kocok */
+#btn-roll {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--text-base);
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    padding: clamp(10px, 2.5vh, 14px) clamp(20px, 5vw, 36px);
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(209, 91, 109, 0.3);
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+#btn-roll:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(209, 91, 109, 0.4);
+}
+
+#btn-roll:active:not(:disabled) {
+    transform: translateY(1px) scale(0.98);
+}
+
+#btn-roll:disabled {
+    background-color: #E2D3D5;
+    color: #A69294;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Dice 3D rotation animation keyframes */
+.rolling {
+    animation: roll-3d-anim 0.7s cubic-bezier(0.25, 0.8, 0.25, 1.25);
+}
+
+@keyframes roll-3d-anim {
+    0% { transform: scale(1) rotate(0deg); }
+    15% { transform: scale(1.2) rotate(135deg) translate(-5px, -5px); }
+    40% { transform: scale(1.3) rotate(270deg) translate(5px, 5px); }
+    70% { transform: scale(1.15) rotate(480deg) translate(-2px, 3px); }
+    100% { transform: scale(1) rotate(720deg); }
+}
+
+/* ==========================================================================
+   SETTINGS PANEL (Deck Kustom & Target Ronde)
+   ========================================================================== */
+#settings-panel {
+    border-top: 1px dashed rgba(74, 29, 36, 0.1);
+    padding-top: 10px;
+}
+
+#settings-panel summary {
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    color: var(--color-text-dark);
+}
+
+.settings-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.settings-body label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+    font-weight: 600;
+}
+
+.settings-body select,
+.settings-body textarea {
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    color: var(--color-text-dark);
+    border: 1px solid rgba(74, 29, 36, 0.2);
+    border-radius: var(--border-radius-sm);
+    padding: 8px 10px;
+    resize: vertical;
+    background: rgba(255, 255, 255, 0.6);
+}
+
+#btn-save-settings {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 30px;
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   TRUTH OR DARE PHYSICAL CARD MODAL
+   ========================================================================== */
+.hidden {
+    display: none !important;
+}
+
+#modal-overlay,
+#win-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    background: rgba(42, 16, 20, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fade-in 0.3s ease-out;
+    /* Support 3D depth for flip card animations */
+    perspective: 1000px;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#modal-box,
+#win-modal-box {
+    background: #FFFDFC;
+    padding: clamp(20px, 5vw, 30px);
+    border-radius: var(--border-radius-lg);
+    text-align: center;
+    width: 90%;
+    max-width: min(90dvw, 390px);
+    max-height: 90dvh;
+    box-shadow: 0 30px 60px rgba(42, 16, 20, 0.25);
+    position: relative;
+    overflow: hidden;
+    /* GSAP handles opening/closing animations. Added 3D settings */
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+}
+
+/* Playing Card borders and aesthetics */
+.card-border-decoration {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    border: 2px solid rgba(209, 91, 109, 0.15);
+    border-radius: calc(var(--border-radius-lg) - 6px);
+    pointer-events: none;
+}
+
+.card-border-decoration::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    border: 1px dashed rgba(209, 91, 109, 0.12);
+    border-radius: calc(var(--border-radius-lg) - 10px);
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(10px, 2.5vw, 15px);
+}
+
+.card-icon {
+    font-size: var(--text-xl);
+    color: var(--color-primary);
+    animation: float 2s infinite ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-icon svg {
+    width: clamp(26px, 8vw, 32px);
+    height: clamp(26px, 8vw, 32px);
+    stroke-width: 2.2px;
+    display: block;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+#modal-title {
+    font-family: var(--font-heading);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--color-text-dark);
+}
+
+.card-divider {
+    width: 60px;
+    height: 3px;
+    background: var(--color-primary);
+    border-radius: 2px;
+    margin: 4px 0;
+}
+
+#modal-desc {
+    font-size: var(--text-base);
+    line-height: 1.6;
+    color: var(--color-text-dark);
+    margin: clamp(4px, 1.5vh, 8px) 0;
+}
+
+.modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.5vh, 12px);
+    width: 100%;
+    margin-top: 10px;
+}
+
+.modal-buttons button {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    padding: clamp(10px, 2vh, 12px) clamp(16px, 4vw, 24px);
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.btn-success {
+    background-color: var(--color-primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(209, 91, 109, 0.2);
+}
+
+.btn-success:hover {
+    background-color: var(--color-primary-hover);
+    transform: translateY(-2px);
+}
+
+.btn-success:active {
+    transform: translateY(1px);
+}
+
+.btn-danger {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    border: 1px solid rgba(209, 91, 109, 0.1) !important;
+}
+
+.btn-danger:hover {
+    background-color: #fadfd9;
+    transform: translateY(-2px);
+}
+
+.btn-danger:active {
+    transform: translateY(1px);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (DESKTOP / LAPTOP)
+   ========================================================================== */
+@media screen and (min-width: 900px) {
+    body {
+        padding: 40px;
+    }
+    
+    #app-container {
+        flex-direction: row;
+        justify-content: space-evenly;
+        align-items: center;
+        gap: 50px;
+    }
+    
+    #board-container {
+        max-width: 600px;
+        flex: 1;
+    }
+    
+    #dashboard-panel {
+        max-width: 420px;
+        flex: 1;
+    }
+
+    .modal-buttons {
+        flex-direction: row;
+    }
+    
+    .modal-buttons button {
+        flex: 1;
+    }
+}

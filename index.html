@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ludo Amore</title>
+    <!-- Import Google Fonts: Playfair Display for headings, Quicksand for UI elements -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- App container for responsive layout -->
+    <div id="app-container">
+        
+        <!-- Game Board Container -->
+        <div id="board-container">
+            <div id="game-board">
+                <!-- Pion Player 1 (Kiri Atas) -->
+                <img src="/assets/pion-pink.png" id="pion-p1-a" class="pion" alt="Pion P1-A">
+                <img src="/assets/pion-pink.png" id="pion-p1-b" class="pion" alt="Pion P1-B">
+
+                <!-- Pion Player 2 (Kanan Bawah) -->
+                <img src="/assets/pion-biru.png" id="pion-p2-a" class="pion" alt="Pion P2-A">
+                <img src="/assets/pion-biru.png" id="pion-p2-b" class="pion" alt="Pion P2-B">
+
+                <!-- Debug overlay: toggled via ?debug URL param or pressing "D" -->
+                <div id="debug-overlay"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard Panel (Side or Bottom) -->
+        <div id="dashboard-panel">
+            <!-- Player Info Cards -->
+            <div class="player-cards">
+                <div class="player-card active" id="card-p1">
+                    <div class="player-avatar avatar-pink"><i data-lucide="heart"></i></div>
+                    <div class="player-details">
+                        <span class="player-name">Player 1</span>
+                        <span class="player-status">Pion Pink</span>
+                    </div>
+                    <span class="player-score" id="score-p1">0</span>
+                </div>
+                <div class="player-card" id="card-p2">
+                    <div class="player-avatar avatar-blue"><i data-lucide="heart"></i></div>
+                    <div class="player-details">
+                        <span class="player-name">Player 2</span>
+                        <span class="player-status">Pion Biru</span>
+                    </div>
+                    <span class="player-score" id="score-p2">0</span>
+                </div>
+            </div>
+
+            <!-- Area Kontrol (Dadu) -->
+            <div id="control-area">
+                <h3 id="turn-indicator">Giliran: Player 1 (Pink)</h3>
+                <span id="round-target-label">Best of 3</span>
+
+                <div class="dice-wrapper">
+                    <img src="/assets/dadu-1.png" id="dice-image" alt="Dadu">
+                </div>
+
+                <button id="btn-roll" onclick="kocokDadu()">Kocok Dadu</button>
+            </div>
+
+            <!-- Panel Pengaturan Deck & Target Ronde -->
+            <details id="settings-panel">
+                <summary>Pengaturan Deck &amp; Target Ronde</summary>
+                <div class="settings-body">
+                    <label>Target Ronde
+                        <select id="input-target-rounds">
+                            <option value="3">Best of 3</option>
+                            <option value="5">Best of 5</option>
+                            <option value="unlimited">Bebas</option>
+                        </select>
+                    </label>
+                    <label>Truth Kustom (1 baris = 1 pertanyaan)
+                        <textarea id="input-custom-truths" rows="4" placeholder="Kosongkan untuk pakai bawaan"></textarea>
+                    </label>
+                    <label>Dare Kustom (1 baris = 1 pertanyaan)
+                        <textarea id="input-custom-dares" rows="4" placeholder="Kosongkan untuk pakai bawaan"></textarea>
+                    </label>
+                    <button id="btn-save-settings" type="button" onclick="saveSettings()">Simpan Pengaturan</button>
+                </div>
+            </details>
+        </div>
+
+    </div>
+
+    <!-- Path Debug Panel: toggled via ?debug URL param or pressing "D" -->
+    <div id="debug-panel" class="hidden">
+        <h4>Path Debug</h4>
+        <div class="debug-panel-row">
+            <label class="debug-panel-checkbox"><input type="checkbox" id="debug-toggle-p1" checked> Jalur P1</label>
+            <label class="debug-panel-checkbox"><input type="checkbox" id="debug-toggle-p2" checked> Jalur P2</label>
+        </div>
+        <div class="debug-panel-row">Pion terpilih: <b id="debug-selected-label">-</b></div>
+        <div class="debug-panel-row">
+            <label>Left % <input type="number" id="debug-input-left" step="0.5" disabled></label>
+            <label>Top % <input type="number" id="debug-input-top" step="0.5" disabled></label>
+        </div>
+        <div class="debug-panel-row">
+            <button id="debug-copy-p1" type="button">Copy PATH_P1</button>
+            <button id="debug-copy-p2" type="button">Copy PATH_P2</button>
+        </div>
+        <textarea id="debug-export" readonly placeholder="Klik Copy untuk generate kode..."></textarea>
+        <p class="debug-panel-hint">Drag titik di papan buat geser. Tekan D buat tutup.</p>
+    </div>
+
+    <!-- Pop-up (Modal) Truth or Dare -->
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-box">
+            <div class="card-border-decoration"></div>
+            <div class="card-content">
+                <div class="card-icon"><i data-lucide="sparkles"></i></div>
+                <h2 id="modal-title">Waktunya Truth!</h2>
+                <div class="card-divider"></div>
+                <p id="modal-desc">Ambil 1 kartu fisik dari tumpukan.</p>
+                <div class="modal-buttons">
+                    <button class="btn-success" onclick="selesaikanTantangan()">Selesai</button>
+                    <button class="btn-danger" onclick="menyerah()">Menyerah (Mundur 1-6)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pop-up (Modal) Kemenangan Ronde/Pertandingan -->
+    <div id="win-modal-overlay" class="hidden">
+        <div id="win-modal-box">
+            <div class="card-border-decoration"></div>
+            <div class="card-content">
+                <div class="card-icon"><i data-lucide="trophy"></i></div>
+                <h2 id="win-modal-title">Player 1 Menang Ronde!</h2>
+                <div class="card-divider"></div>
+                <p id="win-modal-desc">Skor: 0 - 0</p>
+                <div class="modal-buttons">
+                    <button id="btn-next-round" class="btn-success" onclick="startNextRound()">Ronde Berikutnya</button>
+                    <button id="btn-reset-total" class="btn-success hidden" onclick="resetGameState()">Main Lagi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
